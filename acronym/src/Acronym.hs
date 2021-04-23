@@ -4,20 +4,23 @@ import           Data.Text (Text)
 
 -- I do not trust my understanding of the '$' operator's precedence/relationship
 -- with ':' or infix functions to try and clean up some of this code.
-grabLetters :: String -> String -> String
-grabLetters [] acc = acc
-grabLetters all@(s:ss) acc
-  | s `elem` separators = if (head ss) `elem` separators then grabLetters ss acc else grabLetters (tail ss) ((head ss) : acc)
-  | multiCapCheck all acc = grabLetters ss acc
-  | s `elem` capitals = grabLetters ss (s : acc) 
-  | otherwise = grabLetters ss acc
+grabLetters :: String -> String -> Bool -> String
+grabLetters [] acc _ = acc
+grabLetters all@(s:ss) acc capFlag
+  | s `elem` separators = if (head ss) `elem` separators 
+                             then grabLetters ss acc False
+                             else grabLetters (tail ss) ((head ss) : acc) False
+  | multiCapCheck all acc = grabLetters ss acc True
+  | s `elem` capitals && capFlag == False = grabLetters ss (s : acc) True
+  | otherwise = grabLetters ss acc False
   where separators = [' ', '-', '_']
         capitals = ['A'..'Z']
 
-
+-- if both acc and all are caps; skip the letter && and set last cap to true
+-- if letter is cap and previosu letter is not cap 
 multiCapCheck :: String -> String -> Bool
 multiCapCheck xs [] = False
-multiCapCheck (x:xs) (y:ys) -- Do I add a flag here to indicate detection of consecutive capital letters?
+multiCapCheck (x:xs) (y:ys)
   | x `elem` capitals && y `elem` capitals = True
   | otherwise = False
   where capitals = ['A'..'Z']
@@ -33,4 +36,4 @@ orientString :: String -> String
 orientString ss = T.unpack . T.toUpper . T.pack $ reverse ss
 
 abbreviate :: String -> String
-abbreviate xs = orientString $ (grabLetters xs []) ++ (firstLetter xs)
+abbreviate xs = orientString $ (grabLetters xs [] False) ++ (firstLetter xs)
